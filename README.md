@@ -75,7 +75,7 @@ At this point you will be able to tun The Duckietown Gym environment and manual 
 
 
 ### To Do list:
-  **Duedate**: 2021. June. 15
+  **Duedate**: 2021. July. 15
   
   - [x] Setup automatically conda environmnet
   
