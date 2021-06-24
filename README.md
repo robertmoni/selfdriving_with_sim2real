@@ -78,12 +78,20 @@ At this point you will be able to tun The Duckietown Gym environment and manual 
   **Duedate**: 2021. June. 15
   
   [x] Setup automatically conda environmnet
+  
   [x] Add ocnfigurations for *Duckietown gym* and *Ray Rllib*
+  
   [x] Manual control
+  
   [x] Add jupyter lab nd notebook
+  
   [x] Configure tensorboard logging
+  
   [x] Tutorial 1 - Training with domain randomization
+  
   [ ] Tutorial 2 - Training with domain adaptation
+  
   [ ] Testing in simulator
+  
   [ ] Finish README.md
  
