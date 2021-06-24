@@ -7,9 +7,17 @@ Randomization or Daomain Adaptation and Deep Reainforcement Learning to train an
 
 # Outline 
 [1. Setup Conda Environment](#setup_conda_environment)
+
+
 [2. Manaul Control example](#manual_control)
+
+
 [3. Tutorial 1: Training with Domain Randomization](#tutorial_dr)
+
+
 [4. Tutorial 2: Training with Domain Adaptation](#tutorial_da)
+
+
 [5. Testing in the Duckietown Gym Simulator](#testing_agent)
 
 ![]("art/concept.png")
