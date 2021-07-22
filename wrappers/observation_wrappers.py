@@ -16,6 +16,11 @@ from gym import spaces
 import numpy as np
 import logging
 from gym_duckietown.simulator import CAMERA_FOV_Y
+from albumentations import Compose, Normalize, Resize
+from albumentations.pytorch import ToTensorV2
+from gym import spaces
+import os
+# from .my_models.tiramisu import FCDenseNet57
 
 logger = logging.getLogger(__name__)
 
@@ -183,8 +188,8 @@ class MotionBlurWrapper(gym.ObservationWrapper):
             delta_angle = angular_vel * self.blur_time
             if abs(delta_angle) > 0:
                 ksize = np.round(np.abs(delta_angle / self.camera_fov_width_angle * self.camera_width_px)).astype(int) + 1
-                logger.debug("Rotational motion blur kernel size {}".format(ksize))
-                kernel = np.zeros((ksize, ksize))
+                logger.debug("Rotational motion blur kernel size {}".format(ksize))             
+                kernel = np.zeros((ksize[0], ksize[0]))
                 kernel[ksize // 2, :] = 1. / ksize
                 observation = cv2.filter2D(observation, -1, kernel)
         if self.simulate_forward_blur:
@@ -246,3 +251,52 @@ class RandomFrameRepeatingWrapper(gym.ObservationWrapper):
         self.previous_frame = None
         observation = self.env.reset(**kwargs)
         return self.observation(observation)
+    
+def loadDANet(weight_path=os.path.join(os.getcwd(), 'FCDenseNet57_weights.pth')):
+    model = FCDenseNet57(3)
+    model.load_state_dict(torch.load(weight_path), strict=True)
+    model.eval()
+    return model
+
+
+class DomainAdaptationWrapper(gym.ObservationWrapper):
+    def __init__(self, env, model):
+        super().__init__(env)
+        in_shape = self.observation_space.shape
+        assert len(in_shape) == 3 and in_shape[-1] % 3 == 0
+        self.nr_of_frames = in_shape[-1] // 3
+        out_shape = [120, 160, self.nr_of_frames * 3]
+        # self.observation_space.shape = self.shape
+        self.observation_space = spaces.Box(
+            self.observation_space.low[0, 0, 0],
+            self.observation_space.high[0, 0, 0],
+            out_shape,
+            dtype=self.observation_space.dtype)
+
+        self.model = copy.deepcopy(model)
+        if torch.cuda.is_available():
+            self.model.cuda()
+        else:
+            logger.warning("Could not find CUDA device! This might slow down the training.")
+        self.data_prep = Compose([Resize(height=120, width=160, always_apply=True), Normalize(always_apply=True), ToTensorV2()])
+
+    def observation(self, observation: np.ndarray):
+        ret_obs = None
+        for cframe in range(self.nr_of_frames):
+            frame = observation[:, :, cframe * 3:(cframe + 1) * 3]
+            # frame = cv2.resize(frame, (160, 120), interpolation=cv2.INTER_AREA)
+            # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            obs_prep = self.data_prep(image=frame)['image']
+            obs_prep = torch.unsqueeze(obs_prep, dim=0)
+            if torch.cuda.is_available():
+                obs_prep = obs_prep.cuda()
+
+            pred = self.model.forward(obs_prep)
+            pred = (pred * 255).byte().cpu().numpy()
+            pred = pred.squeeze().transpose([1, 2, 0])
+
+            if ret_obs is None:
+                ret_obs = pred
+            else:
+                ret_obs = np.concatenate([ret_obs, pred], axis=-1)
+        return ret_obs

@@ -293,59 +293,59 @@ class ForwardObstacleSpawnnigWrapper(ObstacleSpawningWrapper):
             self.safe_spawn_objects()
         return ret
 
-    def _spawn_objects(self):
-        drivable_tiles = self.simulator.drivable_tiles
-        tile_size = self.simulator.road_tile_size
-        # obj_pose_valid = False
-        # while not obj_pose_valid:
-        # Get a random point in front of the vehicle
-        forward_dist = tile_size * (2. + 2*np.random.random())
-        obj_pos, obj_pos_tangent = self.get_point_on_curve_ahead(forward_dist, self.simulator)
-        # Randomise the lateral posotion of the obstacle
-        right_normal_to_curve = np.array([obj_pos_tangent[2], 0, -obj_pos_tangent[0]])
-        # lateral position can be +- half lane width from the lane center
-        obj_pos += right_normal_to_curve * (np.random.random() - 0.5) * self.lateral_pos_perturb_half_width
-        # Convert coordinates given in meters to coords in tiles
-        obj_pos_tiles = [obj_pos[0] / tile_size, obj_pos[2] / tile_size]
+#     def _spawn_objects(self):
+#         drivable_tiles = self.simulator.drivable_tiles
+#         tile_size = self.simulator.road_tile_size
+#         # obj_pose_valid = False
+#         # while not obj_pose_valid:
+#         # Get a random point in front of the vehicle
+#         forward_dist = tile_size * (2. + 2*np.random.random())
+#         obj_pos, obj_pos_tangent = self.get_point_on_curve_ahead(forward_dist, self.simulator)
+#         # Randomise the lateral posotion of the obstacle
+#         right_normal_to_curve = np.array([obj_pos_tangent[2], 0, -obj_pos_tangent[0]])
+#         # lateral position can be +- half lane width from the lane center
+#         obj_pos += right_normal_to_curve * (np.random.random() - 0.5) * self.lateral_pos_perturb_half_width
+#         # Convert coordinates given in meters to coords in tiles
+#         obj_pos_tiles = [obj_pos[0] / tile_size, obj_pos[2] / tile_size]
 
-        # Check coordinates
-        tile_coords = self.simulator.get_grid_coords(obj_pos)
-        tile = self.simulator._get_tile(tile_coords[0], tile_coords[1])
-        pos_on_tile, _ = np.modf(obj_pos_tiles)
-        # if np.linalg.norm(np.array([0.5, 0.5]) - pos_on_tile) < 0.25 and tile in drivable_tiles:
-        #     obj_pose_valid = True
-        # else:
-        #     logger.warning("Forward obstacle position invalid!")
-        # obj_pose_valid = True
+#         # Check coordinates
+#         tile_coords = self.simulator.get_grid_coords(obj_pos)
+#         tile = self.simulator._get_tile(tile_coords[0], tile_coords[1])
+#         pos_on_tile, _ = np.modf(obj_pos_tiles)
+#         # if np.linalg.norm(np.array([0.5, 0.5]) - pos_on_tile) < 0.25 and tile in drivable_tiles:
+#         #     obj_pose_valid = True
+#         # else:
+#         #     logger.warning("Forward obstacle position invalid!")
+#         # obj_pose_valid = True
 
-        # Object points approximately towrads the tangent at it's position
-        obj_orientation = self.dir_vec_to_angle(obj_pos_tangent)
-        obj_orientation += (np.random.random() - 0.5) * self.orientation_perturb_half_width
-        # Convert orientation in radians to degrees
-        obj_orientation_deg = obj_orientation / np.pi * 180
+#         # Object points approximately towrads the tangent at it's position
+#         obj_orientation = self.dir_vec_to_angle(obj_pos_tangent)
+#         obj_orientation += (np.random.random() - 0.5) * self.orientation_perturb_half_width
+#         # Convert orientation in radians to degrees
+#         obj_orientation_deg = obj_orientation / np.pi * 180
 
-        kind = 'duckiebot'
-        static = False
-        height_scaler = 0.8 + np.random.random() * 0.4
-        height = self.default_object_heights[kind] * height_scaler
-        obstacles = [{'kind': kind,
-                      'pos': obj_pos_tiles,  # [1.7, 4.65],
-                      'rotate': obj_orientation_deg,  # 95, 
-                      'height': height,
-                      'static': static}]
-        self.simulator._load_objects({'objects': obstacles})
+#         kind = 'duckiebot'
+#         static = False
+#         height_scaler = 0.8 + np.random.random() * 0.4
+#         height = self.default_object_heights[kind] * height_scaler
+#         obstacles = [{'kind': kind,
+#                       'pos': obj_pos_tiles,  # [1.7, 4.65],
+#                       'rotate': obj_orientation_deg,  # 95, 
+#                       'height': height,
+#                       'static': static}]
+#         self.simulator._load_objects({'objects': obstacles})
 
-        # Gym-Duckietown's default safety radius is small, so the learned follow distance is very small
-        # This doesn't work for static obstacles, simulator.collidable_safety_radii must be changed for that...
-        for obj in self.simulator.objects:
-            obj.safety_radius *= 2
-            if obj.domain_rand:
-                obj.trim = np.random.uniform(-0.1, 0.1)  # This fixes another bug in the simulator.....
+#         # Gym-Duckietown's default safety radius is small, so the learned follow distance is very small
+#         # This doesn't work for static obstacles, simulator.collidable_safety_radii must be changed for that...
+#         for obj in self.simulator.objects:
+#             obj.safety_radius *= 2
+#             if obj.domain_rand:
+#                 obj.trim = np.random.uniform(-0.1, 0.1)  # This fixes another bug in the simulator.....
 
-        # BUGFIX in the simulator... Dynamic obstacles leave a phantom static version at their initial position
-        if not static:
-            self.simulator.collidable_corners = np.zeros_like(self.simulator.collidable_corners)
-            self.simulator.collidable_centers = np.zeros_like(self.simulator.collidable_centers)
+#         # BUGFIX in the simulator... Dynamic obstacles leave a phantom static version at their initial position
+#         if not static:
+#             self.simulator.collidable_corners = np.zeros_like(self.simulator.collidable_corners)
+#             self.simulator.collidable_centers = np.zeros_like(self.simulator.collidable_centers)
 
     def get_point_on_curve_ahead(self, forward_dist, simulator):
 

@@ -43,8 +43,12 @@ Run jupyter lab:
 
 ## 2. Manual Control example
   
-  
-Open **00. Testing the simulator.ipynb** and follow instructions.
+Run the follwong code:
+
+```cd gym-duckietown```
+```python3 manual_control.py --env-name Duckietown-udem1-v0 --map-name loop_dyn_duckiebots --domain-rand --distortion```
+
+
 At this point you will be able to tun The Duckietown Gym environment and manual control the Duckiebot.
 #manual_control
 
