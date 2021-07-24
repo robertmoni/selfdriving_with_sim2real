@@ -4,3 +4,6 @@ pillow
 torch==1.9.0
 tensorboardX
 jupyterlab
+pyvirtualdisplay
+piglet
+wget

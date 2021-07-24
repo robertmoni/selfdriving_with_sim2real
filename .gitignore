@@ -131,3 +131,5 @@ dmypy.json
 # others
 gym-duckietown/
 artifacts/
+data/
+.vscode/

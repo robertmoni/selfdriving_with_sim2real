@@ -26,16 +26,16 @@ environment_config = {
     # The input image will be scaled to (height, width)
     "resized_input_shape" : '(84, 84)',
     # Crop the top part of the image
-    "crop_image_top": 'true',  # The top 1/top_crop_divider part of the image will be cropped off. (E.g. 3 crops the top third of the image)
+    "crop_image_top": True,  # The top 1/top_crop_divider part of the image will be cropped off. (E.g. 3 crops the top third of the image)
     "top_crop_divider": 3,
     # Convert the image to grayscale
-    "grayscale_image": 'false',
+    "grayscale_image": False,
     # Stack multiple frames as input
-    "frame_stacking": 'true',
+    "frame_stacking": True,
     # Number of frames to stack if frame stacking is enabled
     "frame_stacking_depth": 3,
     # Apply motion blur to the images during training
-    "motion_blur": 'false',
+    "motion_blur": False,
     # Map the action space to a certain type. Available options are:
     # 'leftright', leftright_clipped, 'leftright_braking', steering_braking, 'discrete'
     # 'heading', 'heading_smooth', 'heading_trapz', 'heading_sine', 'heading_limited',
@@ -44,7 +44,7 @@ environment_config = {
     # Available options: 'default', 'default_clipped', 'posangle', 'lane_distance'
     "reward_function": 'posangle',
     # Set Gym Duckietown's distortion parameter to generate fisheye distorted images
-    "distortion": 'true',
+    "distortion": True,
     # How large ange deviation should be accepted when the robot is placed into the simulator
     "accepted_start_angle_deg": 4,
     "simulation_framerate": 20,
@@ -56,15 +56,15 @@ environment_config = {
     # Map(s) used during training. Individual map names could be specified or 'multimap1' to train on a custom map set
     "training_map": 'udem1',
     # Use Gym Duckietown's domain randomization
-    "domain_rand": 'false',
-    "dynamics_rand": 'false',
-    "camera_rand": 'false',
+    "domain_rand": False,
+    "dynamics_rand": False,
+    "camera_rand": False,
     # If >0.0 a new observation/frame will be the same as the previous one, with a probability of frame_repeating
     "frame_repeating" : 0.0,
     # Spawn obstacles (duckies, duckiebots, etc.) to random drivable positions on a map (with or without fixed obstacles)
     # To spawn other duckiebots this option is not recommended, use spawn_forward_obstacle instead
     # Type and amount of spawned obstacles is determined by the dictionary under the 'obstacles' key
-    "spawn_obstacles": 'false',
+    "spawn_obstacles": False,
     "obstacles" :{
       # Keys at this level specify the type of object to be spawned.
       # Supported options: 'duckie', 'duckiebot', 'cone', 'barrier'
@@ -73,18 +73,18 @@ environment_config = {
           "density": 0.5,
           # Non-static objects move according to their default behaviour implemented in the gym Duckietown
           # Duckies "walk" back and forth (like crossing the road), duckiebots perform lane following.
-          "static": 'true'},
+          "static": True},
       "duckiebot" :{
           "density": 0,
-          "static": 'false'}},
+          "static": False}},
     # Spawn a duckiebot in front of the controlled robot in every episode
     # Parameters of the robot are randomised, but settings are hardcoded in ForwardObstacleSpawnnigWrapper)
-    "spawn_forward_obstacle": 'false',
+    "spawn_forward_obstacle": False,
     # Evaluators of the AI driving olympics use small steps to generate many frames which are overlayed to get blured images
     # The aido wrapper implements this blur, and also implements the same dynamics simulation
     #Warning: Using AIDOWrapper slows down the environment simulation (and therefore the training)!
     # Computing an observation can take 10-20 times longer as without it!
-    "aido_wrapper": 'false',
+    "aido_wrapper": False,
     # RLlib only allows unknown keys in the env config -> important "global" keys are kept/copied here
     "wandb":{
       "project": 'duckietown-rllib'},
@@ -143,7 +143,7 @@ ray_config = {
 
     "inference_hparams": {
       "rllib_config": {
-        "explore": 'false',
+        "explore": False,
         "num_workers": 0,
         "num_gpus": 0,
         "callbacks": {}},
@@ -191,7 +191,7 @@ ppo_config = {
   "lr": 5.e-5,
   # Whether to write episode stats and videos to the agent log dir. This is
   # typically located in ~/ray_results.
-  "monitor": 'false',
+  "monitor": False,
   # Evaluate with every `evaluation_interval` training iterations.
   # The evaluation stats will be reported under the "evaluation" metric key.
   # Note that evaluation is currently not parallelized, and that for Ape-X
@@ -205,7 +205,7 @@ ppo_config = {
   # IMPORTANT NOTE: Policy gradient algorithms are able to find the optimal
   # policy, even if this is a stochastic one. Setting "explore=False" here
   # will result in the evaluation workers not using this optimal policy!
-  "evaluation_config": {"monitor": 'true'},
+  "evaluation_config": {"monitor": True},
   # This argument, in conjunction with worker_index, sets the random seed of
   # each worker, so that identically configured trials will have identical
   # results. This makes experiments reproducible.

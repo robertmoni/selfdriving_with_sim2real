@@ -17,6 +17,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update -y && apt-get install -y --no-
   python3-setuptools-git \
   python3.6-dev \
   xvfb \
+  x11-utils\
   ffmpeg \
   wget \
   libgtk2.0-dev \

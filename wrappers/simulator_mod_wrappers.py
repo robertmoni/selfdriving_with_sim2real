@@ -189,7 +189,7 @@ class ObstacleSpawningWrapper(gym.Wrapper):
           static: true
        duckiebot:
           density: 0
-          static: 'false'
+          static: False
     """
     default_object_heights = {'duckie': 0.08,
                               'duckiebot': 0.12,
