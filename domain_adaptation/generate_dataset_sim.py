@@ -1,12 +1,12 @@
 import os
 
-# os.system("Xvfb :0 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &> xvfb.log &")
+# "Xvfb :0 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &> xvfb.log &"
 os.environ['DISPLAY'] = ':0'
 import gym
 import numpy as np
 from PIL import Image
 import logging
-from env import launch_and_wrap_env
+from rllib_utils.env import launch_and_wrap_env
 
 from tqdm import tqdm
 from args import get_training_args, print_args, dump_args_to_json
