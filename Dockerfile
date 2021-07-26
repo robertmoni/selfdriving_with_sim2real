@@ -56,8 +56,9 @@ RUN pip install -e .
 
 WORKDIR /selfdriving_with_sim2real
 RUN cp -R maps/* gym-duckietown/src/gym_duckietown/maps
+RUN cp -R maps/* 
 
-COPY .screenrc root/.sreenrc
+RUN cp .screenrc /root
 RUN apt-get install locales -y && locale-gen en_US.UTF-8
 
 RUN chmod 777 -R /selfdriving_with_sim2real

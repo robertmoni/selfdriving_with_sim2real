@@ -1,11 +1,3 @@
-"""
-Gym wrapper classes that interacts with non-standard or private interfaces of Gym-Duckietown to implement additional
-functionality or fix a bug. The usability of these heavily depend on. the versions of Gym-Duckietown.
-Most of these were implemented for Gym-Duckietown version 5.0.16
-"""
-__license__ = "MIT"
-__copyright__ = "Copyright (c) 2020 András Kalapos"
-
 import gym
 import numpy as np
 import logging

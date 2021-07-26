@@ -1,16 +1,3 @@
-"""
-Gym wrapper classes that transform the action space of Gym-Duckietown to alternative representations.
-The original actions of Duckietown are the normalized wheel velocities of the robot.
-These alternative action representations are
-    - Discrete
-    - Wheel velocity - Braking
-    - Wheel velocity - Clipped (to [0, 1] interval)
-    - Steering
-    - etc.
-"""
-__license__ = "MIT"
-__copyright__ = "Copyright (c) 2020 András Kalapos"
-
 import gym
 import numpy as np
 from gym import spaces

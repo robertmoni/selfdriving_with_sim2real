@@ -71,7 +71,7 @@ def get_training_args(parser:argparse.ArgumentParser=None):
         parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         parser = get_common_args(parser)
     parser.add_argument('--rollouts', type=int, help="Number of rollouts", default=2000)
-    parser.add_argument('--data_dir', type=str, help="Where to place rollouts", default="dataset")
+    parser.add_argument('--save_path', type=str, help="Where to place rollouts", default="dataset")
     parser.add_argument('--seq_len', type=int, help="Length of a sequence", default=10)
     parser.add_argument("--start_timesteps", default=300, type=int,
                         help='For how many time steps a purely random policy is run for')

@@ -4,7 +4,7 @@ import glob
 import logging
 import numpy as np
 from ray.tune.logger import pretty_print
-from utils import recursive_dict_update
+from rllib_utils.utils import recursive_dict_update
 
 logger = logging.getLogger(__name__)
 

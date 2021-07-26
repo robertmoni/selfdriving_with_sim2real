@@ -1,15 +1,17 @@
 import os
-
+import sys
+sys.path.append('/selfdriving_with_sim2real')
 # "Xvfb :0 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &> xvfb.log &"
 os.environ['DISPLAY'] = ':0'
+
 import gym
 import numpy as np
 from PIL import Image
 import logging
+ 
 from rllib_utils.env import launch_and_wrap_env
-
 from tqdm import tqdm
-from args import get_training_args, print_args, dump_args_to_json
+from rllib_utils.args import get_training_args, print_args, dump_args_to_json
 import pyvirtualdisplay
 import subprocess
 
@@ -24,14 +26,9 @@ if __name__ == "__main__":
     ###########################################################
     # Argparse
     args = get_training_args()
-    if not os.path.exists(args.data_dir):
-        os.makedirs(args.data_dir)
-    if not os.path.exists(args.data_dir+'/train'):
-        os.makedirs(args.data_dir+'/train')
-    if not os.path.exists(args.data_dir+'/test'):
-        os.makedirs(args.data_dir+'/test')
-
-
+    if not os.path.exists(args.save_path):
+        os.makedirs(args.save_path)
+ 
     ###########################################################
     # Print args + cuda availability
 
@@ -45,7 +42,7 @@ if __name__ == "__main__":
     environment_config = {
         "mode": 'debug',
         "episode_max_steps": 500,
-        "resized_input_shape" : '(640, 480)',
+        "resized_input_shape" : '(120, 60)',
         "crop_image_top": True,  
         "top_crop_divider": 3,
         "grayscale_image": False,
@@ -104,7 +101,7 @@ if __name__ == "__main__":
 
                     obs, _, _, _ = env.step(action)
                     rollout_cnt = args.rollouts * env_id[0] + i
-                    np.save(os.path.join(args.data_dir+'/train', 'rollout_{}_{}'.format(rollout_cnt, t)),
+                    np.save(os.path.join(args.save_path+'/train', 'rollout_{}_{}'.format(rollout_cnt, t)),
                             np.array(obs, dtype=np.float32))
                     pbar1.update(1)
                     t += 1

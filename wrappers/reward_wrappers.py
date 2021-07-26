@@ -1,8 +1,3 @@
-"""
-Gym wrapper classes that define new reward functions or perform reward transformations."""
-__license__ = "MIT"
-__copyright__ = "Copyright (c) 2020 András Kalapos"
-
 import logging
 import gym
 import gym_duckietown

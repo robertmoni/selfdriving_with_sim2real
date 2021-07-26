@@ -6,7 +6,7 @@ from wrappers.action_wrappers import *
 from wrappers.reward_wrappers import *
 from wrappers.simulator_mod_wrappers import *
 from wrappers.aido_wrapper import AIDOWrapper
-from config import load_config
+from rllib_utils.config import load_config
 
 logger = logging.getLogger(__name__)
 

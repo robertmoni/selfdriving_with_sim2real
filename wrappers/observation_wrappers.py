@@ -1,14 +1,3 @@
-"""
-Gym wrapper classes that transform the observations from Gym-Duckietown to alternative representations.
-- Clipping
-- Resizing
-- Normalization
-- Stacking buffer
-- Grayscale images
-- Simple, convolution based motion blur simulation
-"""
-__license__ = "MIT"
-__copyright__ = "Copyright (c) 2020 András Kalapos"
 
 import gym
 import cv2

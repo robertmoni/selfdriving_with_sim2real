@@ -13,9 +13,9 @@ urls = list()
 
 def download_videos(download_path):
     print("Downloading videos...")
-    for i in tqdm(range(len(urls))):
-        file_path = os.path.join(download_path, f'{i:03d}.mp4')
-        wget.download(urls[i], file_path)
+    # for i in tqdm(range(len(urls))):
+    #     file_path = os.path.join(download_path, f'{i:03d}.mp4')
+    #     wget.download(urls[i], file_path)
     print("Downloading finished.")
 
 
@@ -29,6 +29,7 @@ def saveAsImages(save_path):
         while cap.isOpened():
             ret, frame = cap.read()
             if ret and frame is not None:
+                frame = cv2.resize(frame, dsize=(120,60), interpolation = cv2.INTER_AREA)
                 filename = os.path.join(imgDir, f"{saved_ims:06d}.npy")
                 # cv2.imwrite(filename, frame)
                 np.save(filename, np.asarray(frame))
@@ -44,7 +45,7 @@ def saveAsImages(save_path):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--save_path', type=str, default="./data/real_data")
+    parser.add_argument('--save_path', type=str, default="data/train/real")
     parser.add_argument('--as_videos', action='store_true')
     args = parser.parse_args()
 

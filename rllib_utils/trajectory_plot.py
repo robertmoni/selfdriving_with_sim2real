@@ -1,9 +1,3 @@
-"""
-Method that plots multi-episode trajectories, recorded on multiple maps to a single figure as many dotted lines.
-"""
-__license__ = "MIT"
-__copyright__ = "Copyright (c) 2020 András Kalapos"
-
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')

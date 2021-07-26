@@ -133,3 +133,5 @@ gym-duckietown/
 artifacts/
 data/
 .vscode/
+representation_learning/data/
+representation_learning/artifacts/
