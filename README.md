@@ -76,7 +76,7 @@ At this point you will be able to run the Duckietown Gym environment and manual 
 # 3. Tutorial 1: Training with Domain Randomization
   
   
-  Open **01. Training tutorial.ipynb** and follow instructions.
+  Open **01. Training with Domain Randomization.ipynb** and follow instructions.
   During the training the logs arre saved in the *artifacts/* directory.
   
   
@@ -105,24 +105,37 @@ This will generate 16.000 samples.
 
 ### Genrate data from real
 
-- Remain in the <bd> representation_learning </bd> directory.
+- Remain in the  representation_learning  directory.
 - Run the following script. This will take less...
-```python generate_dataset_real.py ```
+
+```$ python generate_dataset_real.py ```
 
 
+## 4.2 Training the Domain Adaptation network (UNIT network)
 
+Change directory
 
+```$ cd /selfdriving_with_sim2real/representation_learing/unit/```
 
+Run the following code
 
-**TBD**
+```$ CUDA_VISIBLE_DEVICES=1 python train.py  --exp_name training_unit ```
+
   
+This code will generate data intio the **data** directory.
+
+## 4.3 Training the agent with the Domain Adaptation network 
+
+ 
+ - Open **01. Training with Domain Adaptation.ipynb** and follow instructions.
   
-#tutorial_da
 
 ***
 # 5. Testing in the Duckietown Gym Simulator
   
-**TBD**
+ 
+-  Open **03. Testing the agent.ipynb** and follow instructions.
+
   
-#testing_agent
+## References
 
