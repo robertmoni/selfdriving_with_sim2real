@@ -16,6 +16,7 @@ import pyvirtualdisplay
 import subprocess
 
 
+
 if __name__ == "__main__":
     # _display = pyvirtualdisplay.Display(visible=False,  # use False with Xvfb
     #                                 size=(1400, 900))
@@ -38,25 +39,25 @@ if __name__ == "__main__":
     logger.setLevel(logging.WARNING)
     # "LF-norm-zigzag", "LF-norm-loop",
     # MAPSETS = {'multimap':[ "LF-norm-small_loop", "LF-norm-techtrack.yaml"]}
-    MAPSETS = {'multimap':[ "LF-norm-zigzag", "LF-norm-loop","LF-norm-small_loop", "LF-norm-techtrack"]}
+    MAPSETS = {'multimap':["huge_loop2", "map3", "map2","map1"]}
     environment_config = {
         "mode": 'debug',
         "episode_max_steps": 500,
-        "resized_input_shape" : '(120, 60)',
-        "crop_image_top": True,  
-        "top_crop_divider": 3,
+        "resized_input_shape" : '(64, 64)',
+        "crop_image_top": False,  
+        "top_crop_divider": 1,
         "grayscale_image": False,
-        "frame_stacking": True,
-        "frame_stacking_depth": 3,
+        "frame_stacking": False,
+        "frame_stacking_depth": 0,
         "motion_blur": False,
         "action_type": 'heading',
         "reward_function": 'posangle',
         "distortion": True,
         "accepted_start_angle_deg": 4,
         "simulation_framerate": 20,
-        "frame_skip": 1,
+        "frame_skip": 3,
         "action_delay_ratio": 0.0,
-        "training_map": 'udem1',
+        "training_map": 'multimap',
         "domain_rand": False,
         "dynamics_rand": False,
         "camera_rand": False,
@@ -101,8 +102,8 @@ if __name__ == "__main__":
 
                     obs, _, _, _ = env.step(action)
                     rollout_cnt = args.rollouts * env_id[0] + i
-                    np.save(os.path.join(args.save_path+'/train', 'rollout_{}_{}'.format(rollout_cnt, t)),
-                            np.array(obs, dtype=np.float32))
+                    obs = Image.fromarray(np.uint8(obs*255))
+                    obs.save(os.path.join(args.save_path, 'rollout_{}_{}.png'.format(rollout_cnt, t)))
                     pbar1.update(1)
                     t += 1
                     if t == args.seq_len:

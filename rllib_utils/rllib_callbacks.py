@@ -4,6 +4,7 @@ import numpy as np
 import ray.rllib as rllib
 from ray.tune.logger import pretty_print
 from ray.tune.result import TRAINING_ITERATION, TIMESTEPS_TOTAL
+from ray.rllib.agents.callbacks import DefaultCallbacks
 
 logger = logging.getLogger(__name__)
 
@@ -164,3 +165,25 @@ def curriculum_apply_update(result):
             lambda worker, index: worker.foreach_env(lambda env: enable_obstacles(env)))
         logger.warning("Obstacle spawning enabled at timestep {}".format(timesteps_total))
 
+
+class MyCallbacks(DefaultCallbacks):
+    def on_episode_start(self, *, episode, **kwargs):
+        on_episode_start({
+            'episode': episode,
+        })
+
+    def on_episode_step(self, *, base_env, episode, **kwargs):
+        on_episode_step({
+            'env': base_env,
+            'episode': episode,
+        })
+
+    def on_episode_end(self, *, episode, **kwargs):
+        on_episode_end({
+            'episode': episode,
+        })
+
+    def on_train_result(self, *, result, **kwargs):
+        on_train_result({
+            'result': result,
+        })

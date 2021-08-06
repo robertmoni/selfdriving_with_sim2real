@@ -27,6 +27,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 
+torch.cuda.empty_cache()
+
 def dump_config(config, path):
     file_path = os.path.join(path, "config_dump.yml")
     with open(file_path, "w") as config_dump:
@@ -34,21 +36,21 @@ def dump_config(config, path):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--epoch", type=int, default=0, help="epoch to start training from")
-parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
-parser.add_argument("--decay_epoch", type=int, default=90, help="epoch from which to start lr decay")
-parser.add_argument("--data_dir", type=str, default="/selfdriving_with_sim2real/data/",
- help="path to dataset")
-parser.add_argument("--batch_size", type=int, default=256, help="size of the batches")
+parser.add_argument("--n_epochs", type=int, default=100, help="number of epochs of training")
+parser.add_argument("--decay_epoch", type=int, default=80, help="epoch from which to start lr decay")
+parser.add_argument("--data_dir", type=str, default="/selfdriving_with_sim2real/data/", help="path to dataset")
+parser.add_argument("--batch_size", type=int, default=2, help="size of the batches")
 parser.add_argument("--lr", type=float, default=0.0001, help="adam: learning rate")
 parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
-parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
+parser.add_argument("--n_cpu", type=int, default=3, help="number of cpu threads to use during batch generation")
 parser.add_argument("--img_height", type=int, default=64, help="size of image height")
 parser.add_argument("--img_width", type=int, default=64, help="size of image width")
 parser.add_argument("--channels", type=int, default=3, help="number of image channels")
-parser.add_argument("--sample_interval", type=int, default=100, help="interval between saving generator samples")
-parser.add_argument("--checkpoint_interval", type=int, default=25, help="interval between saving model checkpoints")
-parser.add_argument("--n_downsample", type=int, default=4, help="number downsampling layers in encoder")
+parser.add_argument("--sample_interval", type=int, default=1000, help="interval between saving generator samples")
+parser.add_argument("--checkpoint_interval", type=int, default=20, help="interval between saving model checkpoints")
+parser.add_argument("--n_downsample", type=int, default=5, help="number downsampling layers in encoder")
+parser.add_argument("--n_residual", type=int, default=2, help="number of redidual blocks in encoder")
 parser.add_argument("--saved_model_path", type=str, default="../artifacts/", help="Path from where you want to reload a model.")
 parser.add_argument("--dim", type=int, default=32, help="number of filters in first encoder layer")
 parser.add_argument("--exp_name", type=str, default="dt_unit", help="experiment name")
@@ -78,13 +80,13 @@ shared_dim = opt.dim * 2 ** opt.n_downsample
 #shared_dim = 32
 # Initialize generator and discriminator
 shared_E = ResidualBlock(features=shared_dim)
-E1 = Encoder(dim=opt.dim, n_downsample=opt.n_downsample, shared_block=shared_E)
-E2 = Encoder(dim=opt.dim, n_downsample=opt.n_downsample, shared_block=shared_E)
+E1 = Encoder(dim=opt.dim, n_downsample=opt.n_downsample, residual=opt.n_residual, shared_block=shared_E)
+E2 = Encoder(dim=opt.dim, n_downsample=opt.n_downsample, residual=opt.n_residual,shared_block=shared_E)
 shared_G = ResidualBlock(features=shared_dim)
-G1 = Generator(dim=shared_dim, n_upsample=opt.n_downsample, shared_block=shared_G)
-G2 = Generator(dim=shared_dim, n_upsample=opt.n_downsample, shared_block=shared_G)
-D1 = Discriminator(input_shape)
-D2 = Discriminator(input_shape)
+G1 = Generator(dim=shared_dim, n_upsample=opt.n_downsample, residual=opt.n_residual, shared_block=shared_G)
+G2 = Generator(dim=shared_dim, n_upsample=opt.n_downsample, residual=opt.n_residual, shared_block=shared_G)
+D1 = Discriminator(input_shape, n_downsample=opt.n_downsample)
+D2 = Discriminator(input_shape, n_downsample=opt.n_downsample)
 
 if cuda:
     E1 = E1.cuda()
@@ -114,11 +116,16 @@ else:
     D2.apply(weights_init_normal)
 
 # Loss weights
-lambda_0 = 10  # GAN
-lambda_1 = 2  # KL (encoded images)
-lambda_2 = 100  # ID pixel-wise
-lambda_3 = 0.1  # KL (encoded translated images)
-lambda_4 = 100  # Cycle pixel-wise
+# lambda_0 = 10  # GAN
+# lambda_1 = 2  # KL (encoded images)
+# lambda_2 = 100  # ID pixel-wise
+# lambda_3 = 0.1  # KL (encoded translated images)
+# lambda_4 = 100  # Cycle pixel-wise
+lambda_0 = 1  # GAN
+lambda_1 = 0.01 # KL (encoded images)
+lambda_2 = 10  # ID pixel-wise
+lambda_3 = 0.01 # KL (encoded translated images)
+lambda_4 = 10  # Cycle pixel-wise
 
 with open( artifacts_path + "/saved_models/configs.txt", 'w') as f:
     original_stdout = sys.stdout
@@ -126,6 +133,8 @@ with open( artifacts_path + "/saved_models/configs.txt", 'w') as f:
     for args in vars(opt):
         print(args, getattr(opt, args))
 
+    gan_height = opt.img_height // 2 ** opt.n_downsample
+    gan_width = opt.img_width // 2 ** opt.n_downsample
     print()
     print("lambda_0 # GAN = ", lambda_0)
     print("lambda_1 # KL (encoded images) = ", lambda_1)
@@ -143,9 +152,9 @@ with open( artifacts_path + "/saved_models/configs.txt", 'w') as f:
     print("------------------------shared G----------------------------")
     #summary(shared_G, (shared_dim))
     print("------------------------   G1   ----------------------------")
-    summary(G1, (shared_dim, 2, 2))
+    summary(G1, (shared_dim, gan_height, gan_width))
     print("------------------------   G2   ----------------------------")
-    summary(G2, (shared_dim, 2, 2))
+    summary(G2, (shared_dim, gan_height, gan_width))
     print("------------------------   D1   ----------------------------")
     summary(D1, input_shape)
     print("------------------------   D2   ----------------------------")
@@ -262,8 +271,8 @@ for epoch in range(opt.epoch, opt.n_epochs):
     for i, batch in enumerate(dataloader):
 
         # Set model input
-        X1 = Variable(batch["A"].type(Tensor))
-        X2 = Variable(batch["B"].type(Tensor))
+        X1 = Variable(batch["sim"].type(Tensor))
+        X2 = Variable(batch["real"].type(Tensor))
 
         # Adversarial ground truths
         valid = Variable(Tensor(np.ones((X1.size(0), *D1.output_shape))), requires_grad=False)

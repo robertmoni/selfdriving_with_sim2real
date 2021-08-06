@@ -9,6 +9,7 @@ from albumentations import Compose, Normalize, Resize
 from albumentations.pytorch import ToTensorV2
 from gym import spaces
 import os
+import torch
 # from .my_models.tiramisu import FCDenseNet57
 
 logger = logging.getLogger(__name__)
@@ -240,12 +241,6 @@ class RandomFrameRepeatingWrapper(gym.ObservationWrapper):
         self.previous_frame = None
         observation = self.env.reset(**kwargs)
         return self.observation(observation)
-    
-def loadDANet(weight_path=os.path.join(os.getcwd(), 'FCDenseNet57_weights.pth')):
-    model = FCDenseNet57(3)
-    model.load_state_dict(torch.load(weight_path), strict=True)
-    model.eval()
-    return model
 
 
 class DomainAdaptationWrapper(gym.ObservationWrapper):
@@ -254,7 +249,7 @@ class DomainAdaptationWrapper(gym.ObservationWrapper):
         in_shape = self.observation_space.shape
         assert len(in_shape) == 3 and in_shape[-1] % 3 == 0
         self.nr_of_frames = in_shape[-1] // 3
-        out_shape = [120, 160, self.nr_of_frames * 3]
+        out_shape = [64, 64, self.nr_of_frames * 3]
         # self.observation_space.shape = self.shape
         self.observation_space = spaces.Box(
             self.observation_space.low[0, 0, 0],

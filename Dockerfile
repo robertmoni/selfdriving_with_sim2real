@@ -17,6 +17,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update -y && apt-get install -y --no-
   python3-setuptools-git \
   python3.6-dev \
   xvfb \
+  rsync \
   x11-utils\
   ffmpeg \
   wget \
@@ -32,6 +33,7 @@ RUN cd /usr/bin && rm python && ln -s python3.6 python
 RUN python --version 
 
 RUN apt-get install -y --no-install-recommends build-essential nvidia-cuda-toolkit
+RUN apt-get install -y libxtst6 libxi6 libgtk2.0-0 libidn11 libglu1-mesa
 
 RUN python -m pip install --upgrade \
    pip \
@@ -39,31 +41,26 @@ RUN python -m pip install --upgrade \
 
 RUN pip --version
 
-COPY requirements.txt requirements.txt
+WORKDIR /
+COPY . /selfdriving_with_sim2real
+WORKDIR /selfdriving_with_sim2real
 RUN pip install -r requirements.txt
 
-RUN apt-get install -y libxtst6 libxi6 libgtk2.0-0 libidn11 libglu1-mesa
-
-COPY . /selfdriving_with_sim2real
-# RUN python -c 'import torch; assert torch.cuda.is_available(), "cuda is not available." '
-
-WORKDIR /selfdriving_with_sim2real
-RUN rm -rf gym-duckietown/
 RUN git clone --branch v6.1.25 --single-branch --depth 1 https://github.com/duckietown/gym-duckietown.git gym-duckietown/
-
 WORKDIR /selfdriving_with_sim2real/gym-duckietown/
 RUN pip install -e .
 
 WORKDIR /selfdriving_with_sim2real
-RUN cp -R maps/* gym-duckietown/src/gym_duckietown/maps
-RUN cp -R maps/* 
-
+RUN cp -R rllib_utils/maps/* gym-duckietown/src/gym_duckietown/maps
+RUN cp -R rllib_utils/maps/* /usr/local/lib/python3.6/dist-packages/duckietown_world/data
 RUN cp .screenrc /root
+
+
 RUN apt-get install locales -y && locale-gen en_US.UTF-8
 
 RUN chmod 777 -R /selfdriving_with_sim2real
-WORKDIR /app
 
+WORKDIR /app
 RUN chmod -R uo+rwx /app
 
 WORKDIR /selfdriving_with_sim2real

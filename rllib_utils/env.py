@@ -1,12 +1,17 @@
 import logging
+
+import sys
+sys.path.append('/selfdriving_with_sim2real')
+
 from gym_duckietown.simulator import Simulator, DEFAULT_ROBOT_SPEED, DEFAULT_CAMERA_WIDTH, DEFAULT_CAMERA_HEIGHT
 
-from wrappers.observation_wrappers import *
-from wrappers.action_wrappers import *
-from wrappers.reward_wrappers import *
-from wrappers.simulator_mod_wrappers import *
-from wrappers.aido_wrapper import AIDOWrapper
+from rllib_utils.wrappers.observation_wrappers import *
+from rllib_utils.wrappers.action_wrappers import *
+from rllib_utils.wrappers.reward_wrappers import *
+from rllib_utils.wrappers.simulator_mod_wrappers import *
+from rllib_utils.wrappers.aido_wrapper import AIDOWrapper
 from rllib_utils.config import load_config
+
 
 logger = logging.getLogger(__name__)
 

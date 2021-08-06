@@ -9,7 +9,7 @@ from rllib_utils.utils import recursive_dict_update
 logger = logging.getLogger(__name__)
 
 
-def load_config(path="./config/config.yml", update_algo_hparams_from_algo_conf_file=True, config_updates={}):
+def load_config(path="./config.yml", update_algo_hparams_from_algo_conf_file=True, config_updates={}):
     """Loads configuation from config.yml
        WARNING: algo config can't be changed after being loaded (set update_algo_hparams_from_algo_conf_file=False)
     """

@@ -24,26 +24,17 @@ class LambdaLR:
     def step(self, epoch):
         return 1.0 - max(0, epoch + self.offset - self.decay_start_epoch) / (self.n_epochs - self.decay_start_epoch)
 
-
-##############################
-#           RESNET
-##############################
-
-
 class ResidualBlock(nn.Module):
     def __init__(self, features):
         super(ResidualBlock, self).__init__()
 
         conv_block = [
-            # nn.ReflectionPad2d(1),
-            nn.Conv2d(features, features, 3, padding=1),
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(features, features, 3),
             nn.InstanceNorm2d(features),
             nn.ReLU(inplace=True),
-            # nn.ReflectionPad2d(1),
-            nn.Conv2d(features, features, 3, padding=1),
-            nn.InstanceNorm2d(features),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(features, features, 3, padding=1),
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(features, features, 3),
             nn.InstanceNorm2d(features),
         ]
 
@@ -54,69 +45,26 @@ class ResidualBlock(nn.Module):
 
 
 class Encoder(nn.Module):
-    def __init__(self, in_channels=3, dim=64, n_downsample=2, shared_block=None):
+    def __init__(self, in_channels=3, dim=64, n_downsample=2, residual=1, shared_block=None):
         super(Encoder, self).__init__()
 
-        # Initial convolution block
-        # layers = [
-        #     nn.ReflectionPad2d(3),
-        #     nn.Conv2d(in_channels, dim, 7),
-        #     nn.InstanceNorm2d(64),
-        #     nn.LeakyReLU(0.2, inplace=True),
-        # ]
-        ########OLD
-        # # Downsampling
-        # for _ in range(n_downsample):
-        #     layers += [
-        #         nn.Conv2d(dim, dim * 2, 4, stride=2, padding=1),
-        #         nn.InstanceNorm2d(dim * 2),
-        #         nn.ReLU(inplace=True),
-        #     ]
-        #     dim *= 2
-        ########OLD
+        layers = [
+            nn.ReflectionPad2d(3),
+            nn.Conv2d(in_channels, dim, 7),
+            nn.InstanceNorm2d(64),
+            nn.LeakyReLU(0.2, inplace=True),
+        ]
 
+        for _ in range(n_downsample):
+            layers += [
+                nn.Conv2d(dim, dim * 2, 4, stride=2, padding=1),
+                nn.InstanceNorm2d(dim * 2),
+                nn.ReLU(inplace=True),
+            ]
+            dim *= 2
 
-        # Downsampling
-        # for _ in range(n_downsample):
-        #     layers += [
-        #         nn.Conv2d(dim, dim, 5, stride=2, padding=2),
-        #         nn.InstanceNorm2d(dim),
-        #         nn.ReLU(inplace=True),
-        #     ]
-        
-        
-        layers =[
-            nn.Conv2d(in_channels, dim, 3, stride=2, padding=1),
-            nn.InstanceNorm2d(dim*2),
-            nn.ReLU(inplace=True)
-            ]
-        
-        layers +=[
-            nn.Conv2d(dim, dim*2, 3, stride=2, padding=1),
-            nn.InstanceNorm2d(dim*2),
-            nn.ReLU(inplace=True)
-            ]
-        dim *= 2
-        layers +=[
-            nn.Conv2d(dim, dim*2, 3, stride=2, padding=1),
-            nn.InstanceNorm2d(dim*2),
-            nn.ReLU(inplace=True)
-            ]
-        dim *= 2
-        layers +=[
-            nn.Conv2d(dim, dim*2, 3, stride=2, padding=1),
-            nn.InstanceNorm2d(dim*2),
-            nn.ReLU(inplace=True)
-            ]
-        dim *= 2
-        layers +=[
-            nn.Conv2d(dim, dim*2, 3, stride=1, padding=0),
-            nn.InstanceNorm2d(dim*2),
-            nn.ReLU(inplace=True)
-            ]
-        # Residual blocks
-        for _ in range(4):
-            layers += [ResidualBlock(dim*2)]
+        for _ in range(residual):
+            layers += [ResidualBlock(dim)]
 
         self.model_blocks = nn.Sequential(*layers)
         self.shared_block = shared_block
@@ -134,20 +82,15 @@ class Encoder(nn.Module):
 
 
 class Generator(nn.Module):
-    def __init__(self, out_channels=3, dim=64, n_upsample=2, shared_block=None):
+    def __init__(self, out_channels=3, dim=64, n_upsample=2,residual=1, shared_block=None):
         super(Generator, self).__init__()
 
         self.shared_block = shared_block
 
         layers = []
-        ########OLD
-        #dim = dim * 2 ** n_upsample
-        ########OLD
-        # Residual blocks
-        for _ in range(4):
-            layers += [ResidualBlock(dim)]
 
-        # Upsampling
+        for _ in range(residual):
+            layers += [ResidualBlock(dim)]
 
         for _ in range(n_upsample):
             layers += [
@@ -157,13 +100,7 @@ class Generator(nn.Module):
             ]
             dim = dim // 2
 
-        # Output layer
-        layers += [
-                nn.ConvTranspose2d(dim, 3, 4, stride=2, padding=1),
-                nn.InstanceNorm2d(3),
-                nn.LeakyReLU(0.2, inplace=True),
-                ]
-        # layers += [nn.ReflectionPad2d(3), nn.Conv2d(dim, out_channels, 7), nn.Tanh()]
+        layers += [nn.ReflectionPad2d(3), nn.Conv2d(dim, out_channels, 7, stride=1, padding=0), nn.Tanh()]
 
         self.model_blocks = nn.Sequential(*layers)
 
@@ -173,17 +110,11 @@ class Generator(nn.Module):
         return x
 
 
-##############################
-#        Discriminator
-##############################
-
-
 class Discriminator(nn.Module):
-    def __init__(self, input_shape):
-        super(Discriminator, self).__init__()
+    def __init__(self, input_shape, n_downsample=2):
+        super(Discriminator, self ).__init__()
         channels, height, width = input_shape
-        # Calculate output of image discriminator (PatchGAN)
-        self.output_shape = (1, height // 2 ** 4, width // 2 ** 4)
+        self.output_shape = (1, height // 2 ** n_downsample, width // 2 ** n_downsample)
 
         def discriminator_block(in_filters, out_filters, normalize=True):
             """Returns downsampling layers of each discriminator block"""
@@ -193,13 +124,16 @@ class Discriminator(nn.Module):
             layers.append(nn.LeakyReLU(0.2, inplace=True))
             return layers
 
-        self.model = nn.Sequential(
-            *discriminator_block(channels, 64, normalize=False),
-            *discriminator_block(64, 128),
-            *discriminator_block(128, 256),
-            *discriminator_block(256, 512),
-            nn.Conv2d(512, 1, 3, padding=1)
-        )
+        dim = 64
+        self.model = nn.Sequential(*discriminator_block(channels, dim, normalize=False))
+        for _ in range(n_downsample-1):
+            self.model = nn.Sequential(self.model,
+                                *discriminator_block(dim, dim*2))
+            dim *= 2
+        self.model = nn.Sequential(self.model,
+                                nn.Conv2d(dim, 1, 3, padding=1))
+        
 
+  
     def forward(self, img):
         return self.model(img)

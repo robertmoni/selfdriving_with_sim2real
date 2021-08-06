@@ -91,10 +91,6 @@ environment_config = {
     "experiment_name": 'experiment',
     "seed": "0000",}
 
-# %% [markdown]
-# ## 1.2. RLlib config
-
-# %%
 ray_config = {
     "timesteps_total": 1.e+4,
     
@@ -153,13 +149,9 @@ ray_config = {
         "object_store_memory": 209715200, # 200 * 1024 * 1024
         "redis_max_memory": 209715200, # 200 * 1024 * 1024
         "local_mode": True}}
+        
+        }
 
-}
-
-# %% [markdown]
-# ## 1.3 PPO config
-
-# %%
 
 ppo_config = {
     
@@ -231,22 +223,13 @@ ppo_config = {
   "grad_clip": 0.5
 }
 
-# %% [markdown]
-# # 2. Training setup
-# %% [markdown]
-# - Set logger
-# %% [markdown]
-# - Initialize Ray for training
 
-# %%
 ray.init(num_cpus = ray_config["ray_init_config"]["num_cpus"])
 
 
-# %%
 register_env('Duckietown', launch_and_wrap_env)
 
 
-# %%
 tune.run(PPOTrainer,
          stop={'timesteps_total': ray_config["timesteps_total"]},
          config=ppo_config,
