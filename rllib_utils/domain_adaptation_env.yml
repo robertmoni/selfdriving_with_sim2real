@@ -1,0 +1,73 @@
+environment_config:
+    # Run mode allows to load different settings in different run modes. Available options: 'train', 'inference', 'debug'
+    mode: 'train'
+    # Length of an episode (if not terminated due to a failure)
+    episode_max_steps: 500
+    # The input image will be scaled to (height, width)
+    resized_input_shape : '(64, 64)'
+    # Crop the top part of the image
+    crop_image_top: False # The top 1/top_crop_divider part of the image will be cropped off. (E.g. 3 crops the top third of the image)
+    top_crop_divider: 3
+    # Convert the image to grayscale
+    grayscale_image: False
+    # Stack multiple frames as input
+    frame_stacking: True
+    # Number of frames to stack if frame stacking is enabled
+    frame_stacking_depth: 3
+    # Apply motion blur to the images during training
+    motion_blur: False
+    # Map the action space to a certain type. Available options are:
+    # 'leftright', leftright_clipped, 'leftright_braking', steering_braking, 'discrete'
+    # 'heading', 'heading_smooth', 'heading_trapz', 'heading_sine', 'heading_limited',
+    action_type: 'heading'
+    # Overwrite the default reward function of Gym Duckietown ('default' leaves the default reward of the gym)
+    # Available options: 'default', 'default_clipped', 'posangle', 'lane_distance'
+    reward_function: 'posangle'
+    # Set Gym Duckietown's distortion parameter to generate fisheye distorted images
+    distortion: True
+    # How large ange deviation should be accepted when the robot is placed into the simulator
+    accepted_start_angle_deg: 4
+    simulation_framerate: 20
+    # Skip frames in the agent-environment loop and only step the environment using the last action
+    frame_skip: 1
+    # Computed actions come into effect this much later in the time period of a step.
+    # Allowed values: floats in the (0., 1.) interval or 'random' to get random values in each instance of the env
+    action_delay_ratio: 0.0
+    # Map(s) used during training. Individual map names could be specified or 'multimap1' to train on a custom map set
+    training_map: 'multi'
+    # Use Gym Duckietown's domain randomization
+    domain_rand: False
+    dynamics_rand: False
+    camera_rand: False
+    # If >0.0 a new observation/frame will be the same as the previous one, with a probability of frame_repeating
+    frame_repeating : 0.0
+    # Spawn obstacles (duckies, duckiebots, etc.) to random drivable positions on a map (with or without fixed obstacles)
+    # To spawn other duckiebots this option is not recommended, use spawn_forward_obstacle instead
+    # Type and amount of spawned obstacles is determined by the dictionary under the 'obstacles' key
+    spawn_obstacles: False
+    obstacles :
+      # Keys at this level specify the type of object to be spawned.
+      # Supported options: 'duckie', 'duckiebot', 'cone', 'barrier'
+      duckie :
+          # Density: Amount of ducks per drivable tile. Can't be larger than one currently
+          density: 0.5
+          # Non-static objects move according to their default behaviour implemented in the gym Duckietown
+          # Duckies "walk" back and forth (like crossing the road), duckiebots perform lane following.
+          static: True
+      duckiebot :
+          density: 0
+          static: False
+    # Spawn a duckiebot in front of the controlled robot in every episode
+    # Parameters of the robot are randomised, but settings are hardcoded in ForwardObstacleSpawnnigWrapper)
+    spawn_forward_obstacle: False
+    # Evaluators of the AI driving olympics use small steps to generate many frames which are overlayed to get blured images
+    # The aido wrapper implements this blur, and also implements the same dynamics simulation
+    #Warning: Using AIDOWrapper slows down the environment simulation (and therefore the training)!
+    # Computing an observation can take 10-20 times longer as without it!
+    aido_wrapper: False
+    # RLlib only allows unknown keys in the env config -> important "global" keys are kept/copied here
+    wandb:
+      project: 'duckietown-rllib'
+    experiment_name: 'experiment'
+    seed: "0000"""
+    domain_adaptation: True

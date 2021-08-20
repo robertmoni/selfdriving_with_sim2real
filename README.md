@@ -9,6 +9,9 @@ Since the Duckietown environment supports deployment into real life environment 
 - Domain Randomization + PPO
 - Domain Adaptation + PPO
 
+<p align="center" >
+<img src="art/concept.png" alt="Concept" width="300">
+</p>
 The trainings are carried out in the Duckietown Gym environment. To test the methods in the real life environment, one can acquire the [Duckiebot hardware](https://www.duckietown.org/about/hardware)  or submit the trained model to the [AI Driving Olympics Challenge server](https://challenges.duckietown.org/v4/).
 
 ***
@@ -17,50 +20,29 @@ The trainings are carried out in the Duckietown Gym environment. To test the met
 
 [1. Setup Environment](##-1.-Setup-Environment)
 
-[2. Manual Control example](##-2.-Manual-Control-example)
+[2. Tutorial 1: Training agent with PPO and Domain Randomization](#tutorial_dr)
 
-[3. Tutorial 1: Training with Domain Randomization](#tutorial_dr)
+[3. Tutorial 2: Training with PPO and Domain Adaptation](#tutorial_da)
 
-[4. Tutorial 2: Training with Domain Adaptation](#tutorial_da)
+[4. Testing in the Duckietown Gym Simulator](#testing_agent)
 
-[5. Testing in the Duckietown Gym Simulator](#testing_agent)
+<p align="center" >
+<img src="art/sim_trained.gif" alt="Concept" width="300">
+<img src="art/real_trained.gif" alt="Concept" width="300">
+</p>
 
 ***
 
 ### Prerequisites
 
-This tutorial currently works on Linux OS.
-Anaconda and Python 3.6 is required.
+This tutorial currently works using Docker environment.
 ***
-<p align="center" >
-<img src="art/concept.png" alt="Concept" width="300">
-</p>
 
 ***
 
 ## 1. Setup Environment
 
-This repository provides both # conda # and # docker # ways to set up a working environment for the tutorial. Choose yours wisely.
-
-### 1.1 Conda environment
-
-- Run conda environment setup:
-
-```$ bash setup_conda_environment.sh```
-
-- Run jupyter notebook:
-
-```$ xvfb-run -a -s "-screen 0 1400x900x24" jupyter notebook  --ip 0.0.0.0 --port <portnumber> --no-browser --allow-root```
-
-or
-
-- Run jupyter lab:
-
-```$ xvfb-run -a -s "-screen 0 1400x900x24" jupyter lab  --ip 0.0.0.0 --port <portnumber> --no-browser --allow-root```
-
-- Access your editor with a browser ```http://localhost: \<portnumber\>```
-
-### 1.2 Docker environment
+This repository provides a # docker # image to set up a working environment for the tutorial.
 
 - Build the docker environment
 
@@ -68,27 +50,34 @@ or
 
 - Run the docker environment
 
-```$ nvidia-docker run --name sim2real_image -v $(pwd):/selfdriving_with_sim2real --shm-size=2gb -t -d sim2real_image:latest bash```
+```$ nvidia-docker run --name sim2real_container -v $(pwd):/selfdriving_with_sim2real -p 7090:6006 -p 7091:8888 --shm-size=4gb -d sim2real_image:latest bash```
 
-*Note:* for development with the docker container  we recommend using Visual Studio Code with this setup (<https://code.visualstudio.com/docs/remote/containers>).
+- or, if you don't have any gpu:
+
+```$ docker run --name sim2real_container -v $(pwd):/selfdriving_with_sim2real -p 7090:6006 -p 7091:8888  --shm-size=4gb -d sim2real_image:latest bash```
+
+- Attach to docker (if not attached by default)
+
+```docker attach sim2real_container```
+
+**From this point, all code will be ran inside the docker container!!!**
+
+- Run Jupyter Lab
+```xvfb-run -a -s "-screen 0 1400x900x24" jupyter lab --ip 0.0.0.0 --port 8888 --no-browser --allow-root```
+
+*Note1: since the docker container act as a headles display, we need to set up a virtual display with **xvfb**.*
+
+- Access Jupyter Lab in your browser with the attached port number (**7091**)
+
+[http://localhost:7091](http://localhost:7091)
+
+*Note2: if the docker is running on a remote machine, change the **localhost** part to the ipaddress of the remote machine.*
+
+*Note3: for development with the docker container  we recommend using Visual Studio Code with this setup (<https://code.visualstudio.com/docs/remote/containers>).*
 
 ***
 
-## 2. Manual Control example
-  
-- Change directory:
-
-```$ cd gym-duckietown```
-
-- Run the following code:
-
-```$ python3 manual_control.py --env-name Duckietown-udem1-v0 --map-name loop_dyn_duckiebots --domain-rand --distortion```
-
-At this point you will be able to run the Duckietown Gym environment and manual control the Duckiebot.
-
-***
-
-## 3. Tutorial 1: Training with Domain Randomization
+## 2. Tutorial 1: Training agent with PPO and Domain Randomization
   
   Open **01. Training with Domain Randomization.ipynb** and follow instructions.
   During the training the logs arre saved in the *artifacts/* directory.
@@ -96,15 +85,14 @@ At this point you will be able to run the Duckietown Gym environment and manual 
 <p align="center" >
 <img src="art/just_policy.png" alt="Concept" width="300">
 </p>
-# tutorial_dr
 
 ***
 
-## 4. Tutorial 2: Training with Domain Adaptation
+## 3. Tutorial 2: Training with PPO and Domain Adaptation
 
-### 4.1 Data generation
+### 3.1 Data generation
 
-#### Genrate data from simulator
+#### Generate data from simulator
 
 - Change directory
 
@@ -114,7 +102,7 @@ At this point you will be able to run the Duckietown Gym environment and manual 
 
 ```$ python generate_dataset_sim.py --rollouts 200 --seq_len 10 --data_dir /selfdriving_with_sim2real/data/train/sim```
 
-This will generate 8.000 samples.
+This will generate 8000 samples.
 
 ### Generate data from real
 
@@ -123,7 +111,7 @@ This will generate 8.000 samples.
 
 ```$ python generate_dataset_real.py```
 
-### 4.2 Training the Domain Adaptation network (UNIT network)
+### 3.2 Training the Domain Adaptation network (UNIT network)
 
 Change directory
 
@@ -135,13 +123,13 @@ Run the following code
 
 This code will generate data into the **data** directory.
 
-### 4.3 Training the agent with the Domain Adaptation network
+### 3.3 Training the agent with the Domain Adaptation network
 
-- Open **01. Training with Domain Adaptation.ipynb** and follow instructions.
+- Open **02. Training with Domain Adaptation.ipynb** and follow instructions.
   
 ***
 
-## 5. Testing in the Duckietown Gym Simulator
+## 4. Testing in the Duckietown Gym Simulator
   
 - Open **03. Testing the agent.ipynb** and follow instructions.
 
