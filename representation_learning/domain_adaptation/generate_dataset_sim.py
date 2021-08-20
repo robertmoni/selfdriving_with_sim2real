@@ -14,6 +14,7 @@ from tqdm import tqdm
 from rllib_utils.args import get_training_args, print_args, dump_args_to_json
 import pyvirtualdisplay
 import subprocess
+from gym_duckietown.exceptions import NotInLane
 
 
 
@@ -91,19 +92,38 @@ if __name__ == "__main__":
 
             for i in range(args.rollouts):
                 env.reset()
+
+                
+
                 # policy is not configured yet, using random policy now
-                action = env.action_space.sample()
+                # action = env.action_space.sample()
                 # print("actions", a_rollout[:10])
                 # print("shape", len(a_rollout))
 
 
                 t = 0
                 while True:
+                    
+                    # get parameters 
+                    try:
+                        lane_pose = env.get_lane_pos2(env.cur_pos, env.cur_angle)
+                    except NotInLane:
+                        break
+                    
+                    distance_to_road_center = lane_pose.dist
+                    angle_from_straight_in_rads = lane_pose.angle_rad
+                
+                    # PD controller parameters
+                    k_p = 0.5
+                    k_d = 5
+
+                    # velocity = 0.5
+                    action = (k_p * distance_to_road_center + k_d * angle_from_straight_in_rads)
 
                     obs, _, _, _ = env.step(action)
                     rollout_cnt = args.rollouts * env_id[0] + i
                     obs = Image.fromarray(np.uint8(obs*255))
-                    obs.save(os.path.join(args.save_path, 'rollout_{}_{}.png'.format(rollout_cnt, t)))
+                    obs.save(os.path.join(args.save_path, 'real_{}_{}.png'.format(rollout_cnt, t)))
                     pbar1.update(1)
                     t += 1
                     if t == args.seq_len:

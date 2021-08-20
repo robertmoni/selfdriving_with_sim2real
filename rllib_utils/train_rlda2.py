@@ -16,7 +16,9 @@ from utils import seed
 from rllib_callbacks import on_episode_start, on_episode_step, on_episode_end, on_train_result
 from rllib_callbacks import MyCallbacks
 from rllib_loggers import TensorboardImageLogger
-
+import numpy as np
+# temporary workaround
+np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)   
 
 seed = 42
 
@@ -26,9 +28,9 @@ environment_config = {
     # Length of an episode (if not terminated due to a failure)
     "episode_max_steps": 500,
     # The input image will be scaled to (height, width)
-    "resized_input_shape" : '(84, 84)',
+    "resized_input_shape" : '(64, 64)',
     # Crop the top part of the image
-    "crop_image_top": True,  # The top 1/top_crop_divider part of the image will be cropped off. (E.g. 3 crops the top third of the image)
+    "crop_image_top": False,  # The top 1/top_crop_divider part of the image will be cropped off. (E.g. 3 crops the top third of the image)
     "top_crop_divider": 3,
     # Convert the image to grayscale
     "grayscale_image": False,
@@ -56,9 +58,9 @@ environment_config = {
     # Allowed values: floats in the (0., 1.) interval or 'random' to get random values in each instance of the env
     "action_delay_ratio": 0.0,
     # Map(s) used during training. Individual map names could be specified or 'multimap1' to train on a custom map set
-    "training_map": 'udem1',
+    "training_map": 'multi',
     # Use Gym Duckietown's domain randomization
-    "domain_rand": True,
+    "domain_rand": False,
     "dynamics_rand": False,
     "camera_rand": False,
     # If >0.0 a new observation/frame will be the same as the previous one, with a probability of frame_repeating
@@ -92,18 +94,17 @@ environment_config = {
       "project": 'duckietown-rllib'},
     "experiment_name": 'experiment',
     "seed": "0000",
-    "domain_adaptation": False}
+    "domain_adaptation": True}
 
 ray_config = {
-    "timesteps_total": 1.e+6,
+    "timesteps_total": 2.e+6,
     
     "ray_init_config" :{
-        # "address": 127.0.0.1,
         "num_cpus": 10,
-        'object_store_memory': 10737418240,
-        "num_gpus": 1,
-        # "webui_host": 127.0.0.1
-    },
+        'object_store_memory': 8589934592, #8Gb
+        "num_gpus": 1},
+       
+    
     # To load a trained model to continue training DO NOT USE THIS OPTION FOR PRETRAINING
     # -1 means no trained models are restored, training starts from random weights
     "restore_seed": -1,
@@ -135,7 +136,7 @@ ray_config = {
     #    num_sgd_iter: 2
       "ray_init_config":{
         "num_cpus": 1,
-        "memory": 2097152000, # 2000 * 1024 * 1024
+        "memory": 8500000000, # 2000 * 1024 * 1024
         "object_store_memory": 209715200, # 200 * 1024 * 1024
         "redis_max_memory": 209715200, # 200 * 1024 * 1024
         "local_mode": True}},
@@ -158,11 +159,7 @@ ray_config = {
 
 
 ppo_config = {
-    
-  'env': 'Duckietown',
-  'callbacks': MyCallbacks,
-  "env_config": environment_config,  
-  # === RLlib common congfig ================================================
+   # === RLlib common congfig ================================================
   # https://ray.readthedocs.io/en/latest/rllib-training.html#common-parameters
   # Number of rollout worker actors to create for parallel sampling. Setting
   # this to 0 will force rollouts to be done in the trainer actor.
@@ -172,16 +169,19 @@ ppo_config = {
   # "sample_batch_size": 265,
   # Number of GPUs to allocate to the trainer process. This can be fractional
   # (e.g., 0.3 GPUs).
-  "num_gpus": 0,
+  "num_gpus": 1,
   # Training batch size, if applicable. Should be >= sample_batch_size.
   # Samples batches will be concatenated together to a batch of this size,
   # which is then passed to SGD.
   "train_batch_size": 1024,
-  # Discount factor of the MDP.
-  "gamma": 0.99,
-  # The default learning rate.
-  # Note, that scientific notation is only interpreted as a number if the . and the sign are included!
-  "lr": 5.e-5,
+  #  Environmnet name
+  'env': 'Duckietown',
+  # Env convig
+  "env_config": environment_config, 
+  # Use calbbacks
+  'callbacks': MyCallbacks,
+  # DL Framework
+  "framework": 'torch',
   # Whether to write episode stats and videos to the agent log dir. This is
   # typically located in ~/ray_results.
   "monitor": False,
@@ -189,7 +189,7 @@ ppo_config = {
   # The evaluation stats will be reported under the "evaluation" metric key.
   # Note that evaluation is currently not parallelized, and that for Ape-X
   # metrics are already only reported for the lowest epsilon workers.
-  "evaluation_interval": None, # 25
+  "evaluation_interval": 25, 
   # Number of episodes to run per evaluation period. If using multiple
   # evaluation workers, we will run at least this many episodes total.
   "evaluation_num_episodes": 2,
@@ -203,27 +203,64 @@ ppo_config = {
   # each worker, so that identically configured trials will have identical
   # results. This makes experiments reproducible.
   "seed": 1234,
+  
+
   # === PPO-specific config =================================================
   # https://ray.readthedocs.io/en/latest/rllib-algorithms.html#proximal-policy-optimization-ppo
-  # The GAE(lambda) parameter.
-  "lambda": 0.95,
+  # Should use a critic as a baseline (otherwise don't use value baseline;
+  # required for using GAE).
+  "use_critic": True,
+  # If true, use the Generalized Advantage Estimator (GAE)
+  # with a value function, see https://arxiv.org/pdf/1506.02438.pdf.
+  "use_gae": True,
+  # The GAE (lambda) parameter.
+  "lambda": 1.0, #0.95,
+  # Initial coefficient for KL divergence.
+  "kl_coeff": 0.2,
+  # Size of batches collected from each worker.
+  "rollout_fragment_length": 200,
   # Total SGD batch size across all devices for SGD. This defines the
   # minibatch size within each epoch.
   "sgd_minibatch_size": 128,
+  # Whether to shuffle sequences in the batch when training (recommended).
+  "shuffle_sequences": True,
+  # Number of SGD iterations in each outer loop (i.e., number of epochs to
+  #  execute per train batch).
+  "num_sgd_iter": 30,
+  # Stepsize of SGD.
+  "lr": 5e-5,
+  # Learning rate schedule.
+  "lr_schedule": None,
   # Coefficient of the value function loss. IMPORTANT: you must tune this if
-  # you set vf_share_layers: True. (it's False by default).
-  "vf_loss_coeff": 0.5,
+  # you set vf_share_layers=True inside your model's config.
+  "vf_loss_coeff": 1.0, #0.5, #
    # Coefficient of the entropy regularizer.
   "entropy_coeff": 0.0,
+  # Decay schedule for the entropy regularizer.
+  "entropy_coeff_schedule": None,
   # PPO clip parameter.
-  "clip_param": 0.2,
+  "clip_param": 0.3,
   # Clip param for the value function. Note that this is sensitive to the
   # scale of the rewards. If your expected V is large, increase this.
-  "vf_clip_param": 0.2,
+  "vf_clip_param": 10.0,
   # If specified, clip the global norm of gradients by this amount.
-  "grad_clip": 0.5
-}
+  "grad_clip": None, #0.5
+  # Target value for KL divergence.
+  "kl_target": 0.01,
+  #  Whether to rollout "complete_episodes" or "truncate_episodes".
+  "batch_mode": "truncate_episodes",
+   # Discount factor of the MDP.
+  "gamma": 0.99,
 
+  "model" :{"fcnet_hiddens": [1024, 512, 256, 128],
+          "fcnet_activation": "relu",
+          "post_fcnet_hiddens": [],
+          "post_fcnet_activation": "tanh",
+
+          # Share layers for value function. If you set this to True, it's
+          # important to tune vf_loss_coeff.
+          "vf_share_layers": False, }
+}
 
 ray.init(**ray_config["ray_init_config"])
 

@@ -10,6 +10,10 @@ from albumentations.pytorch import ToTensorV2
 from gym import spaces
 import os
 import torch
+import copy
+
+from torch._C import dtype
+from representation_learning.unit.model import Encoder, ResidualBlock
 # from .my_models.tiramisu import FCDenseNet57
 
 logger = logging.getLogger(__name__)
@@ -244,43 +248,56 @@ class RandomFrameRepeatingWrapper(gym.ObservationWrapper):
 
 
 class DomainAdaptationWrapper(gym.ObservationWrapper):
-    def __init__(self, env, model):
+    def __init__(self, env):
         super().__init__(env)
         in_shape = self.observation_space.shape
         assert len(in_shape) == 3 and in_shape[-1] % 3 == 0
         self.nr_of_frames = in_shape[-1] // 3
-        out_shape = [64, 64, self.nr_of_frames * 3]
-        # self.observation_space.shape = self.shape
-        self.observation_space = spaces.Box(
-            self.observation_space.low[0, 0, 0],
-            self.observation_space.high[0, 0, 0],
-            out_shape,
-            dtype=self.observation_space.dtype)
-
-        self.model = copy.deepcopy(model)
+        """output 3072"""
+        out_shape = [2 * 2 * self.nr_of_frames * 256]
+        # out_shape = [2 * 2 * 256]
+        self.observation_space = spaces.Box(low=0, high=1,  shape=out_shape,  dtype=np.float32)
+        saved_path = "/selfdriving_with_sim2real/representation_learning/artifacts/20210806-094918/saved_models/E1_75.pth"
+        self.model = loadTrainedModel(weights_path = saved_path, s_features=256, dim=8, n_downsample=5, residual=1)
         if torch.cuda.is_available():
             self.model.cuda()
         else:
             logger.warning("Could not find CUDA device! This might slow down the training.")
-        self.data_prep = Compose([Resize(height=120, width=160, always_apply=True), Normalize(always_apply=True), ToTensorV2()])
+        self.data_prep = Compose([Resize(height=64, width=64, always_apply=True), Normalize(always_apply=True), ToTensorV2()])
 
     def observation(self, observation: np.ndarray):
         ret_obs = None
         for cframe in range(self.nr_of_frames):
             frame = observation[:, :, cframe * 3:(cframe + 1) * 3]
-            # frame = cv2.resize(frame, (160, 120), interpolation=cv2.INTER_AREA)
-            # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             obs_prep = self.data_prep(image=frame)['image']
+
             obs_prep = torch.unsqueeze(obs_prep, dim=0)
             if torch.cuda.is_available():
                 obs_prep = obs_prep.cuda()
+            else:
+                obs_prep = obs_prep.cpu()
 
-            pred = self.model.forward(obs_prep)
-            pred = (pred * 255).byte().cpu().numpy()
-            pred = pred.squeeze().transpose([1, 2, 0])
-
+            pred = self.model.forward(obs_prep)[1]
+            pred = pred.cpu()
+            pred = np.asarray( pred.flatten(), dtype=np.float32)
+      
             if ret_obs is None:
                 ret_obs = pred
             else:
-                ret_obs = np.concatenate([ret_obs, pred], axis=-1)
-        return ret_obs
+                ret_obs = np.concatenate((ret_obs, pred))
+                """output 1024"""
+                # ret_obs +=  pred
+
+        return (ret_obs - ret_obs.min()) / (ret_obs.max() - ret_obs.min())
+
+def loadTrainedModel(weights_path=None, s_features=512, dim=64, n_downsample=2, residual=1):
+    shared_E = ResidualBlock(features=s_features) # equals dim * 2 **n_downsamples
+    model = Encoder(dim=dim, n_downsample=n_downsample, residual=residual, shared_block=shared_E)
+    if torch.cuda.is_available():
+        device = 'cuda'
+    else:
+        device = 'cpu'
+    model.load_state_dict(torch.load(weights_path, map_location=torch.device(device)), strict=True)
+    model.requires_grad_(False)
+    
+    return model

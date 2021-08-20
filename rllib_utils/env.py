@@ -118,6 +118,8 @@ def wrap_env(env_config: dict, env=None):
     if env_config["mode"] in ['train', 'debug'] and env_config['motion_blur']:
         env = MotionBlurWrapper(env)
     env = NormalizeWrapper(env)
+    if env_config["domain_adaptation"]:
+        env = DomainAdaptationWrapper(env)
 
     # Action wrappers
     if env_config["action_type"] == 'discrete':

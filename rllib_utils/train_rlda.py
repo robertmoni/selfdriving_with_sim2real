@@ -8,6 +8,7 @@ sys.path.append('/selfdriving_with_sim2real')
 # Run this in command line before starting training "Xvfb :0 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &> xvfb.log &"
 os.environ['DISPLAY'] = ':0'
 
+import functools
 from datetime import datetime
 import ray
 from ray import tune
@@ -29,7 +30,7 @@ torch, _ = try_import_torch()
 
 ###########################################################
 # Load config
-config = load_config('./config.yml', config_updates={"env_config": {"mode": "train"}})
+config = load_config('config.yml', config_updates={"env_config": {"mode": "train"}})
 # config = load_config('./config/config.yml', config_updates={})
 # Set numpy and random seed
 seed(1234)
@@ -37,57 +38,60 @@ seed(1234)
 ###########################################################
 # Set up experiment parameters
 config_updates = {"seed": 0000,
-                  "experiment_name": "Debug",
+                  "experiment_name": "PPO with DA net",
                   "env_config": {},
-                  "rllib_config": {}
+                  "rllib_config": {
+                      "algo_config": {"model" : {
+                                    "fcnet_hiddens": [512, 256, 256],
+                                    "fcnet_activation": "relu",
+                                    "post_fcnet_hiddens": [],
+                                    "post_fcnet_activation": "tanh",    
+                      }}}
                   }
 update_config(config, config_updates)
 
-def loadTrainedModel(weight_path):
-    shared_E = ResidualBlock(features=512) # equals dim * 2 **n_downsamples
-    model = Encoder(dim=8, n_downsample=5, residual=1, shared_block=shared_E)
-    model.load_state_dict(torch.load(weight_path), strict=True)
-    # freeze model
-    model.requires_grad_(False)
-
-    model = nn.Sequential(model,nn.Flatten(),
-    nn.Linear(out_features=1),
-    nn.Tanh())
-    return model
+# def loadTrainedModel(load_model,  s_features=512, dim=64, n_downsample=2, residual=1,):
+#     shared_E = ResidualBlock(features=s_features) # equals dim * 2 **n_downsamples
+#     model = Encoder(dim=dim, n_downsample=n_downsample, residual=residual, shared_block=shared_E)
+#     model.load_state_dict(torch.load(load_model), strict=True)
+#     # freeze model
+#     # model.requires_grad_(False)
+#     model.eval()
+#     return model
 
 
-class DAmodel(nn.Module):
-    def __init__(self, s_features=512, dim=64, n_downsample=2,residual=1,weight_path = None):
-        super(DAmodel, self).__init__()
-        shared_E = ResidualBlock(features=s_features)
-        self.model = Encoder(dim=dim, n_downsample=n_downsample, residual=residual, shared_block=shared_E)
-        self.model.load_state_dict(torch.load(weight_path), strict=True)
-        self.model.requires_grad_(False)
+# class DAmodel(nn.Module):
+#     def __init__(self, s_features=512, dim=64, n_downsample=2,residual=1, load_model = None):
+#         super(DAmodel, self).__init__()
+#         shared_E = ResidualBlock(features=s_features)
+#         self.model = Encoder(dim=dim, n_downsample=n_downsample, residual=residual, shared_block=shared_E)
+#         self.model.load_state_dict(torch.load(weight_path), strict=True)
+#         self.model.requires_grad_(False)
 
-        self.linear0 = nn.Linear(in_features=2048, out_features=1024)
-        self.linear1 = nn.Linear(in_features=1024, out_features=1)
-        self.th0 = nn.Tanh()
-        self.rl1=nn.ReLU()
-
-
-    def forward(self, x):
-        x = self.model(x)
-        x = x.flatten()
-        x = self.linear0(x)
-        x = self.rl1(x)
-        x = self.linear1(x)
-        x = self.th0(x)
-        return x
+#         self.linear0 = nn.Linear(in_features=2048, out_features=1024)
+#         self.relu0=nn.ReLU()
+#         self.linear1 = nn.Linear(in_features=1024, out_features=1)
+#         self.th0 = nn.Tanh()
+        
 
 
-weight_path = "/selfdriving_with_sim2real/representation_learning/artifacts/20210805-212656/saved_models/E1_25.pth"
+#     def forward(self, x):
+#         x = self.model(x)
+#         x = x.flatten()
+#         x = self.linear0(x)
+#         x = self.relu0(x)
+#         x = self.linear1(x)
+#         x = self.th0(x)
+#         return x
 
-model = DAmodel(s_features=512, dim=64, n_downsample=2,residual=1,weight_path=weight_path)
+
+weight_path = "/selfdriving_with_sim2real/representation_learning/artifacts/20210806-094918/saved_models/E1_75.pth"
+model = loadTrainedModel(load_model = weight_path, s_features=256, dim=8, n_downsample=5, residual=1)
 ray.init(**config["ray_init_config"])
 
 
 # %%
-register_env('Duckietown', launch_and_wrap_env, extra_config={'model': model})
+register_env('Duckietown', functools.partial(launch_and_wrap_env, extra_config={'model': model}))
 config["rllib_config"].update({'env': 'Duckietown',
                                'callbacks': MyCallbacks,
                                "env_config": config["env_config"],

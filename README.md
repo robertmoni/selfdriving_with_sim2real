@@ -1,40 +1,48 @@
-# Self Driving Agent training with Simulation-to-Real trasnfer using Python, Ray RLlib and gym-duckietown
-![](art/tools.png)
+# Self Driving Agent training with Simulation-to-Real transfer learning methods
 
-This repository contains the steps of a tutorial to succesfully train a Reinforcement Learning agent with Deep Reainforcement Learning. Furthermore, to tackle the simulation-to-real transfer two different methods are presented: Domain Randomization and Domain Adaptation. The trainings are carried out in the Duckietown Gym environment. 
+![Tools](art/tools.png)
 
+This repository contains a brief tutorial on training a Reinforcement Learning agent for Lane Following in the Duckietown environment.
+The agent is trained using the Proximal Policy Optimization (PPO) algorithm with Generalized Advantage Estimation (GAE) method in an Actor-Critic framework.
+Since the Duckietown environment supports deployment into real life environment with Duckiebot robots, we provide our methods with Simulation-to-real transfer learning capabilities:  
+
+- Domain Randomization + PPO
+- Domain Adaptation + PPO
+
+The trainings are carried out in the Duckietown Gym environment. To test the methods in the real life environment, one can acquire the [Duckiebot hardware](https://www.duckietown.org/about/hardware)  or submit the trained model to the [AI Driving Olympics Challenge server](https://challenges.duckietown.org/v4/).
 
 ***
-# Outline 
-[1. Setup Environment](#setup_environment)
 
+## Outline
 
-[2. Manaul Control example](#manual_control)
+[1. Setup Environment](##-1.-Setup-Environment)
 
+[2. Manual Control example](##-2.-Manual-Control-example)
 
 [3. Tutorial 1: Training with Domain Randomization](#tutorial_dr)
 
-
 [4. Tutorial 2: Training with Domain Adaptation](#tutorial_da)
-
 
 [5. Testing in the Duckietown Gym Simulator](#testing_agent)
 
 ***
+
 ### Prerequisites
+
 This tutorial currently works on Linux OS.
-Anaconda and Python 3.6 is required. 
+Anaconda and Python 3.6 is required.
 ***
 <p align="center" >
 <img src="art/concept.png" alt="Concept" width="300">
 </p>
 
-
 ***
-# 1. Setup Environment
-This repository provides both # conda # and # docker # ways to set up a working environmnet for the tutorial. Choose your's wisely. 
-## 1.1 Conda environment
 
+## 1. Setup Environment
+
+This repository provides both # conda # and # docker # ways to set up a working environment for the tutorial. Choose yours wisely.
+
+### 1.1 Conda environment
 
 - Run conda environment setup:
 
@@ -42,87 +50,80 @@ This repository provides both # conda # and # docker # ways to set up a working 
 
 - Run jupyter notebook:
 
-```$ xvfb-run -a -s "-screen 0 1400x900x24" jupyter notebook  --ip 0.0.0.0 --port <portnumber> --no-browser --allow-root  ```
+```$ xvfb-run -a -s "-screen 0 1400x900x24" jupyter notebook  --ip 0.0.0.0 --port <portnumber> --no-browser --allow-root```
 
 or
 
 - Run jupyter lab:
 
-```$ xvfb-run -a -s "-screen 0 1400x900x24" jupyter lab  --ip 0.0.0.0 --port <portnumber> --no-browser --allow-root  ```
+```$ xvfb-run -a -s "-screen 0 1400x900x24" jupyter lab  --ip 0.0.0.0 --port <portnumber> --no-browser --allow-root```
 
-* Access your editor with a browser http://localhost:\<portnumber\>
+- Access your editor with a browser ```http://localhost: \<portnumber\>```
 
+### 1.2 Docker environment
 
-
-## 1.2 Docker environment
-
-- Build the docker environmnet
+- Build the docker environment
 
 ```$ docker build . --tag sim2real_image```
 
-
-- Run the docker environent
+- Run the docker environment
 
 ```$ nvidia-docker run --name sim2real_image -v $(pwd):/selfdriving_with_sim2real --shm-size=2gb -t -d sim2real_image:latest bash```
 
-
-*Note:* for developement with the docker contaainer  we reccomand using Visual Studio Code with this setup (https://code.visualstudio.com/docs/remote/containers).
+*Note:* for development with the docker container  we recommend using Visual Studio Code with this setup (<https://code.visualstudio.com/docs/remote/containers>).
 
 ***
-# 2. Manual Control example
+
+## 2. Manual Control example
   
 - Change directory:
 
 ```$ cd gym-duckietown```
 
-- Run the follwong code:
- 
-```$ python3 manual_control.py --env-name Duckietown-udem1-v0 --map-name loop_dyn_duckiebots --domain-rand --distortion```
+- Run the following code:
 
+```$ python3 manual_control.py --env-name Duckietown-udem1-v0 --map-name loop_dyn_duckiebots --domain-rand --distortion```
 
 At this point you will be able to run the Duckietown Gym environment and manual control the Duckiebot.
 
-
 ***
-# 3. Tutorial 1: Training with Domain Randomization
-  
+
+## 3. Tutorial 1: Training with Domain Randomization
   
   Open **01. Training with Domain Randomization.ipynb** and follow instructions.
   During the training the logs arre saved in the *artifacts/* directory.
   
-  
-
-
 <p align="center" >
 <img src="art/just_policy.png" alt="Concept" width="300">
 </p>
-#tutorial_dr
+# tutorial_dr
 
 ***
-# 4. Tutorial 2: Training with Domain Adaptation
 
-## 4.1 Data generation
+## 4. Tutorial 2: Training with Domain Adaptation
 
-### Genrate data from simulator
--  Change direcorty 
+### 4.1 Data generation
+
+#### Genrate data from simulator
+
+- Change directory
 
 ```$ cd domain_adaptation```
 
 - Run the following script. This might take a while...
 
-```$ python generate_dataset_sim.py --rollouts 200 --seq_len 10 --data_dir /selfdriving_with_sim2real/data/train/sim ```
+```$ python generate_dataset_sim.py --rollouts 200 --seq_len 10 --data_dir /selfdriving_with_sim2real/data/train/sim```
 
 This will generate 8.000 samples.
 
-### Genrate data from real
+### Generate data from real
 
 - Remain in the  representation_learning  directory.
 - Run the following script. This will take less...
 
-```$ python generate_dataset_real.py ```
+```$ python generate_dataset_real.py```
 
-
-## 4.2 Training the Domain Adaptation network (UNIT network)
+### 4.2 Training the Domain Adaptation network (UNIT network)
 
 Change directory
 
@@ -130,23 +131,18 @@ Change directory
 
 Run the following code
 
-```$ CUDA_VISIBLE_DEVICES=1 python train.py  --exp_name training_unit ```
+```$ CUDA_VISIBLE_DEVICES=1 python train.py  --exp_name training_unit```
 
+This code will generate data into the **data** directory.
+
+### 4.3 Training the agent with the Domain Adaptation network
+
+- Open **01. Training with Domain Adaptation.ipynb** and follow instructions.
   
-This code will generate data intio the **data** directory.
-
-## 4.3 Training the agent with the Domain Adaptation network 
-
- 
- - Open **01. Training with Domain Adaptation.ipynb** and follow instructions.
-  
-
 ***
-# 5. Testing in the Duckietown Gym Simulator
-  
- 
--  Open **03. Testing the agent.ipynb** and follow instructions.
 
+## 5. Testing in the Duckietown Gym Simulator
   
-## References
+- Open **03. Testing the agent.ipynb** and follow instructions.
 
+### References

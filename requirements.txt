@@ -8,3 +8,6 @@ pyvirtualdisplay
 piglet
 wget
 torchsummary
+GPy
+scikit-learn
+typing

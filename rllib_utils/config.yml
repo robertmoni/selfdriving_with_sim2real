@@ -10,16 +10,12 @@ algo: 'PPO'
 algo_config_files:
   PPO: "ppo.yml"
   general: "general.yml"
-  DDPG: "ddpq.yml"
-  APEX: "apex.yml"
-  IMPALA: "impala.yaml"
-  SAC: "sac.yml"
 
 
 # === Environment pre- & post processing config
 env_config:
   # Run mode allows to load different settings in different run modes. Available options: 'train', 'inference', 'debug'
-  mode: 'train'
+  mode: 'debug'
   # Evaluators of the AI driving olympics use small steps to generate many frames which are overlayed to get blured images
   # The aido wrapper implements this blur, and also implements the same dynamics simulation
   #Warning: Using AIDOWrapper slows down the environment simulation (and therefore the training)!
@@ -98,9 +94,9 @@ env_config:
 #   num_gpus: 0
 
 ray_init_config:
-  num_cpus: 10
-  object_store_memory: 10737418240
-  num_gpus: 2
+  num_cpus: 1
+  object_store_memory: 1037418240
+  num_gpus: 0
   #webui_host: '127.0.0.1'
   # webui_host: '127.0.0.1'
 
