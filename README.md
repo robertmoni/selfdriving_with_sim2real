@@ -24,7 +24,6 @@ The trainings are carried out in the Duckietown Gym environment. To test the met
 
 [3. Tutorial 2: Training with PPO and Domain Adaptation](#tutorial_da)
 
-[4. Testing in the Duckietown Gym Simulator](#testing_agent)
 
 <p align="center" >
 <img src="art/sim_trained.gif" alt="Concept" width="300">
@@ -127,11 +126,7 @@ This code will generate data into the **data** directory.
 
 - Open **02. Training with Domain Adaptation.ipynb** and follow instructions.
   
-***
 
-## 4. Testing in the Duckietown Gym Simulator
-  
-- Open **03. Testing the agent.ipynb** and follow instructions.
 
 ## Tensorboard
 
