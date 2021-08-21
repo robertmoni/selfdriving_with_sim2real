@@ -133,4 +133,25 @@ This code will generate data into the **data** directory.
   
 - Open **03. Testing the agent.ipynb** and follow instructions.
 
-### References
+## Tensorboard
+
+While the trainings are running, tensorboard logs into the folloring directory:
+```/selfdriving_with_sim2real/rllib_utils/artifacts```
+
+Run the following comments:
+
+```$ cd /selfdriving_with_sim2real/rllib_utils/artifacts```
+```$ tensorboard --logdir . --port 6006 --bind_all```
+
+Now open your browser and access 
+
+``` [http://localhost:7090](http://localhost:7090)```
+
+Among the SCALARS the most important metric is **episode_reward_mean**.
+
+![Training_scalars](art/training_scalars.PNG)
+
+Also, during training relative trajectories are logged. This tells us how well an agent can follow a lane through training.
+
+![Training_trajectories](art/training_trjectories.PNG
+

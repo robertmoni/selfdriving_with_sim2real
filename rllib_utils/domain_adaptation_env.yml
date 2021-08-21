@@ -69,5 +69,5 @@ environment_config:
     wandb:
       project: 'duckietown-rllib'
     experiment_name: 'experiment'
-    seed: "0000"""
+    seed: "0000"
     domain_adaptation: True

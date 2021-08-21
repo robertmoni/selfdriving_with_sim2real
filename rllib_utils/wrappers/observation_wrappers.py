@@ -257,7 +257,7 @@ class DomainAdaptationWrapper(gym.ObservationWrapper):
         out_shape = [2 * 2 * self.nr_of_frames * 256]
         # out_shape = [2 * 2 * 256]
         self.observation_space = spaces.Box(low=0, high=1,  shape=out_shape,  dtype=np.float32)
-        saved_path = "/selfdriving_with_sim2real/representation_learning/artifacts/20210806-094918/saved_models/E1_75.pth"
+        saved_path = "rllib_utils/saved_models/E1_75.pth"
         self.model = loadTrainedModel(weights_path = saved_path, s_features=256, dim=8, n_downsample=5, residual=1)
         if torch.cuda.is_available():
             self.model.cuda()

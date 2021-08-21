@@ -159,7 +159,7 @@ ray_config = {
 
 
 ppo_config = {
-   # === RLlib common congfig ================================================
+  # === RLlib common congfig ================================================
   # https://ray.readthedocs.io/en/latest/rllib-training.html#common-parameters
   # Number of rollout worker actors to create for parallel sampling. Setting
   # this to 0 will force rollouts to be done in the trainer actor.
