@@ -1,3 +1,10 @@
+# Update
+
+- this repository is under major maintenance
+- final stable version will be updated until April 30 2025
+
+
+
 # Self Driving Agent training with Simulation-to-Real transfer learning methods
 
 ![Tools](art/tools.png)
