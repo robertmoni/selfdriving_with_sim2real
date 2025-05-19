@@ -1,7 +1,7 @@
 # Update
 
 - this repository is under major maintenance
-- final stable version will be updated until April 30 2025
+- final stable version will be updated until May 30 2025
 
 
 
